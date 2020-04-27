@@ -72,7 +72,7 @@ router.get("/products/:id", async (req, res) => {
 // PUT request - Update a single product
 router.put("/products/:id", upload.single("photo"), async (req, res) => {
   try {
-    let product = await Product.findOneAndUpdate(
+    let product = await Product.findOneAndUpdate( 
       { _id: req.params.id }, 
       {
         $set: {
