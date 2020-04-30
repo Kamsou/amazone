@@ -10,9 +10,10 @@
             <div>
               <label> Catégorie </label>
               <div class="select">
-                <select class="">
-                  <option value="1">1</option>
-                  <option value="2">2</option>
+                <select class="" v-model="categoryID">
+                  <option v-for="category in categories" :value="category._id" :key="category._id">
+                  {{ category.type }}
+                  </option>
                 </select>
                 <div class="select_arrow"></div> 
               </div>
@@ -22,9 +23,10 @@
             <div>
               <label> Owner </label>
               <div class="select">
-                <select>
-                  <option value="3">3</option>
-                  <option value="4">4</option>
+                <select v-model="ownerID">
+                  <option v-for="owner in owners" :value="owner._id" :key="owner._id">
+                  {{ owner.name }}
+                  </option>
                 </select>
                 <div class="select_arrow"></div> 
               </div> 
@@ -33,19 +35,25 @@
             <!-- Title -->
             <div>
               <label>Nom</label>
-              <input type="text"/>
+              <input type="text" v-model="title"/>
             </div>
 
             <!-- Price -->
             <div>
               <label>Prix</label>
-              <input type="number"/>
+              <input type="number" v-model="price"/>
+            </div>
+
+            <!-- Stock Quantity -->
+            <div>
+              <label>Quantité</label>
+              <input type="number" v-model="stockQuantity"/>
             </div>
 
             <!-- Description -->
             <div>
               <label>Description</label>
-              <textarea placeholder="Description"></textarea>
+              <textarea placeholder="Description" v-model="description"></textarea>
             </div>
 
             <!-- Photo -->
@@ -53,13 +61,14 @@
               <label>Ajouter une Photo</label>
               <div>
                 <label for="">
-                  <input type="file" />
+                  <input type="file" @change="onFileSelected"/>
+                  <p class="nom_du_fichier">{{ fileName }}</p>
                 </label>
               </div>
             </div>
 
             <!-- Photo -->
-            <a href="#" class="button_amazon">Ajouter</a>
+            <a href="#" class="button_amazon" @click="onAddPoney">Ajouter</a>
 
           </form>
         </div>
@@ -71,8 +80,64 @@
 
 <script>
   export default {
-    
-  }
+    async asyncData({ $axios }) {
+      try {
+        let categories = $axios.$get('http://localhost:5000/api/categories');
+        let owners = $axios.$get('http://localhost:5000/api/owners');
+
+        const [catResponse, ownerResponse] = await Promise.all([
+          categories,
+          owners
+        ]);
+
+        console.log(catResponse);
+
+        return {
+          categories: catResponse.categories,
+          owners: ownerResponse.owners
+        };
+      } catch (err) {
+        console.log(err);   
+      }
+    },
+
+    data() {
+      return {
+        categoryID: null,
+        ownerID: null,
+        title: "",
+        price: 0,
+        description: "",
+        selectedFile: null,
+        stockQuantity: 1,
+        fileName: ""
+      };
+    },
+
+    methods: {
+      onFileSelected(event) {
+        this.selectedFile = event.target.files[0];
+        console.log(this.selectedFile);        
+        this.fileName = event.target.files[0].name;
+      },
+
+      async onAddPoney() {
+        let data = new FormData();
+        data.append("title", this.title);
+        data.append("price", this.price);
+        data.append("description", this.description);
+        data.append("ownerID", this.ownerID);
+        data.append("categoryID", this.categoryID);
+        data.append("photo", this.selectedFile, this.selectedFile.name);
+        data.append("stockQuantity", this.stockQuantity)
+
+        let result = await this.$axios.$post('http://localhost:5000/api/products', data);
+
+        this.$router.push("/")
+      }
+    },
+
+  };
 </script>
 
 <style lang="scss" scoped>
@@ -136,6 +201,9 @@ width: 60%;
     padding: 15px;
     box-sizing: border-box;
     font-size: 14px;
+  }
+  .nom_du_fichier {
+    padding-bottom: 30px;
   }
 }
 .button_amazon {
